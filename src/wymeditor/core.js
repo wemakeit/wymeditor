@@ -833,7 +833,7 @@ WYMeditor.INIT_DIALOG = function (index) {
     if (dialogType === WYMeditor.DIALOG_LINK) {
         // ensure that we select the link to populate the fields
         if (selected && selected.tagName &&
-                selected.tagName.toLowerCase !== WYMeditor.A) {
+                selected.tagName.toLowerCase() !== WYMeditor.A) {
             selected = jQuery(selected).parentsOrSelf(WYMeditor.A);
         }
 
