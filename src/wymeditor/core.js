@@ -146,8 +146,8 @@ jQuery.extend(WYMeditor, {
 
     VERSION             : "@VERSION",
     INSTANCES           : [],
-    STRINGS             : [],
-    SKINS               : [],
+    STRINGS             : {},
+    SKINS               : {},
     NAME                : "name",
     INDEX               : "{Wym_Index}",
     WYM_INDEX           : "wym_index",
