@@ -377,7 +377,7 @@ jQuery.fn.wymeditor = function (options) {
         direction:  "ltr",
         customCommands: [],
         boxHtml: String() +
-            "<div class='wym_box'>" +
+            "<div class='wym_box' style='display:none;'>" +
                 "<div class='wym_area_top'>" +
                     WYMeditor.TOOLS +
                 "</div>" +
