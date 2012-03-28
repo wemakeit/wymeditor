@@ -300,7 +300,20 @@ WYMeditor.editor.prototype.xhtml = function () {
     execCommand in some cases).
 */
 WYMeditor.editor.prototype.exec = function (cmd) {
-    var container, custom_run, _this = this;
+    var container, custom_run = false, _this = this;
+
+    // Check customCommands for all commands first
+    jQuery.each(this._options.customCommands, function () {
+        if (cmd === this.name) {
+            custom_run = true;
+            this.run.apply(_this);
+            return false;
+        }
+    });
+
+    if (custom_run)
+      return;
+
     switch (cmd) {
 
     case WYMeditor.CREATE_LINK:
@@ -347,19 +360,8 @@ WYMeditor.editor.prototype.exec = function (cmd) {
         this.outdent();
         break;
 
-
     default:
-        custom_run = false;
-        jQuery.each(this._options.customCommands, function () {
-            if (cmd === this.name) {
-                custom_run = true;
-                this.run.apply(_this);
-                return false;
-            }
-        });
-        if (!custom_run) {
-            this._exec(cmd);
-        }
+        this._exec(cmd);
         break;
     }
 };
