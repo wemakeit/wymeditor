@@ -151,7 +151,8 @@ WYMeditor.XhtmlValidator = {
                 "5":"rel",
                 "6":"rev",
                 "shape":/^(rect|rectangle|circ|circle|poly|polygon)$/,
-                "7":"type"
+                "7":"type",
+                "8":"target"
             }
         },
         "0":"abbr",
