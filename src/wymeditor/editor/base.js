@@ -676,7 +676,7 @@ WYMeditor.editor.prototype.replaceStrings = function (sVal) {
     if (!WYMeditor.STRINGS[this._options.lang]) {
         try {
             eval(jQuery.ajax({url: this._options.langPath +
-                this._options.lang + '.js', async: false}).responseText);
+                this._options.lang + '.js', async: false, dataType: 'text'}).responseText);
         } catch (e) {
             WYMeditor.console.error(
                 "WYMeditor: error while parsing language file."
@@ -2329,7 +2329,8 @@ WYMeditor.editor.prototype.configureEditorUsingRawCss = function () {
         CssParser.parse(
             jQuery.ajax({
                 url: this._options.stylesheet,
-                async: false
+                async: false,
+                dataType: 'text'
             }).responseText
         );
     } else {
@@ -2422,7 +2423,7 @@ WYMeditor.editor.prototype.loadSkin = function () {
     // Also check if it hasn't already been loaded by another instance
     if (this._options.initSkin && !WYMeditor.SKINS[this._options.skin]) {
         eval(jQuery.ajax({url: this._options.skinPath +
-            WYMeditor.SKINS_DEFAULT_JS, async: false}).responseText);
+            WYMeditor.SKINS_DEFAULT_JS, async: false, dataType: 'text'}).responseText);
     }
 
     // Init the skin, if needed
