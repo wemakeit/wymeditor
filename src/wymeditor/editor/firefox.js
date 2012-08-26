@@ -208,7 +208,17 @@ WYMeditor.WymClassMozilla.prototype.keyup = function (evt) {
 
         if (name === WYMeditor.BODY) {
             // Replace text nodes with <p> tags
-            wym._exec(WYMeditor.FORMAT_BLOCK, WYMeditor.P);
+            // Detect the case where Cmd-A selected all content, in which case
+            // BODY appears to be selected, but should not be formatted.
+            range = wym.selection().getAllRanges()[0];
+            all = rangy.createRange(wym._doc);
+            all.selectNodeContents(container);
+            if (range.startContainer !== all.startContainer ||
+                range.endContainer !== all.endContainer ||
+                range.startOffset !== all.startOffset ||
+                range.endOffset !== all.endOffset) {
+                    wym._exec(WYMeditor.FORMAT_BLOCK, WYMeditor.P);
+            }
             wym.fixBodyHtml();
         }
     }
