@@ -41,7 +41,7 @@ WYMeditor.WymClassOpera.prototype.initIframe = function(iframe) {
     this._doc.designMode = "on";
 
     //init html value
-    this.html(this._wym._html);
+    this._html(this._wym._options.html);
 
     //pre-bind functions
     if (jQuery.isFunction(this._options.preBind)) {
@@ -79,7 +79,7 @@ WYMeditor.WymClassOpera.prototype.selected = function() {
     var sel = this._iframe.contentWindow.getSelection();
     var node = sel.focusNode;
     if (node) {
-        if (node.nodeName == "#text") {
+        if (node.nodeName === "#text") {
             return node.parentNode;
         } else {
             return node;
@@ -103,13 +103,7 @@ WYMeditor.WymClassOpera.prototype.keydown = function(evt) {
     //Get a P instead of no container
     if (!jQuery(startNode).parentsOrSelf(WYMeditor.MAIN_CONTAINERS.join(","))[0] &&
             !jQuery(startNode).parentsOrSelf('li') &&
-            evt.keyCode != WYMeditor.KEY.ENTER &&
-            evt.keyCode != WYMeditor.KEY.LEFT &&
-            evt.keyCode != WYMeditor.KEY.UP &&
-            evt.keyCode != WYMeditor.KEY.RIGHT &&
-            evt.keyCode != WYMeditor.KEY.DOWN &&
-            evt.keyCode != WYMeditor.KEY.BACKSPACE &&
-            evt.keyCode != WYMeditor.KEY.DELETE) {
+            !keyCanCreateBlockElement(evt.which)) {
 
         wym._exec(WYMeditor.FORMAT_BLOCK, WYMeditor.P);
     }

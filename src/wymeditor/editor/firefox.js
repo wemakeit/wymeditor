@@ -27,10 +27,12 @@ WYMeditor.WymClassMozilla = function (wym) {
 };
 
 // Placeholder cell to allow content in TD cells for FF 3.5+
-WYMeditor.WymClassMozilla.CELL_PLACEHOLDER = '<br _moz_dirty="">';
+WYMeditor.WymClassMozilla.CELL_PLACEHOLDER = '<br _moz_dirty="" />';
 
 // Firefox 3.5 and 3.6 require the CELL_PLACEHOLDER and 4.0 doesn't
-WYMeditor.WymClassMozilla.NEEDS_CELL_FIX = jQuery.browser.version >= '1.9.1' &&
+WYMeditor.WymClassMozilla.NEEDS_CELL_FIX = parseInt(
+    jQuery.browser.version, 10) === 1 &&
+    jQuery.browser.version >= '1.9.1' &&
     jQuery.browser.version < '2.0';
 
 WYMeditor.WymClassMozilla.prototype.initIframe = function (iframe) {
@@ -54,7 +56,7 @@ WYMeditor.WymClassMozilla.prototype.initIframe = function (iframe) {
     jQuery('html', this._doc).attr('dir', this._options.direction);
 
     //init html value
-    this.html(this._wym._html);
+    this._html(this._wym._options.html);
 
     //init designMode
     this.enableDesignMode();
@@ -91,10 +93,10 @@ WYMeditor.WymClassMozilla.prototype.initIframe = function (iframe) {
     this.listen();
 };
 
-/* @name html
+/** @name html
  * @description Get/Set the html value
  */
-WYMeditor.WymClassMozilla.prototype.html = function (html) {
+WYMeditor.WymClassMozilla.prototype._html = function (html) {
     if (typeof html === 'string') {
         //disable designMode
         try {
@@ -135,8 +137,9 @@ WYMeditor.WymClassMozilla.prototype._exec = function (cmd, param) {
 
     //set to P if parent = BODY
     var container = this.selected();
-    if (container.tagName.toLowerCase() === WYMeditor.BODY) {
+    if (container && container.tagName.toLowerCase() === WYMeditor.BODY) {
         this._exec(WYMeditor.FORMAT_BLOCK, WYMeditor.P);
+        this.fixBodyHtml();
     }
 
     return true;
@@ -154,12 +157,12 @@ WYMeditor.WymClassMozilla.prototype.keydown = function (evt) {
     var wym = WYMeditor.INSTANCES[this.title];
 
     if (evt.ctrlKey) {
-        if (evt.keyCode === 66) {
+        if (evt.which === 66) {
             //CTRL+b => STRONG
             wym._exec(WYMeditor.BOLD);
             return false;
         }
-        if (evt.keyCode === 73) {
+        if (evt.which === 73) {
             //CTRL+i => EMPHASIS
             wym._exec(WYMeditor.ITALIC);
             return false;
@@ -174,40 +177,43 @@ WYMeditor.WymClassMozilla.prototype.keyup = function (evt) {
     // 'this' is the doc
     var wym = WYMeditor.INSTANCES[this.title],
         container,
-        name;
+        defaultRootContainer,
+        notValidRootContainers,
+        name,
+        parentName;
 
+    notValidRootContainers =
+        wym.documentStructureManager.structureRules.notValidRootContainers;
+    defaultRootContainer =
+        wym.documentStructureManager.structureRules.defaultRootContainer;
     wym._selected_image = null;
     container = null;
 
-    if (evt.keyCode !== WYMeditor.KEY.BACKSPACE &&
-            evt.keyCode !== WYMeditor.KEY.CTRL &&
-            evt.keyCode !== WYMeditor.KEY.DELETE &&
-            evt.keyCode !== WYMeditor.KEY.COMMAND &&
-            evt.keyCode !== WYMeditor.KEY.UP &&
-            evt.keyCode !== WYMeditor.KEY.DOWN &&
-            evt.keyCode !== WYMeditor.KEY.LEFT &&
-            evt.keyCode !== WYMeditor.KEY.RIGHT &&
-            evt.keyCode !== WYMeditor.KEY.ENTER &&
+    // If the inputted key cannont create a block element and is not a command,
+    // check to make sure the selection is properly wrapped in a container
+    if (!wym.keyCanCreateBlockElement(evt.which) &&
+            evt.which !== WYMeditor.KEY.CTRL &&
+            evt.which !== WYMeditor.KEY.COMMAND &&
             !evt.metaKey &&
-            !evt.ctrlKey) { // Not BACKSPACE, DELETE, CTRL, or COMMAND key
+            !evt.ctrlKey) {
 
         container = wym.selected();
         name = container.tagName.toLowerCase();
-
-        //fix forbidden main containers
-        if (name === "strong" ||
-                name === "b" ||
-                name === "em" ||
-                name === "i" ||
-                name === "sub" ||
-                name === "sup" ||
-                name === "a") {
-
-            name = container.parentNode.tagName.toLowerCase();
+        if (container.parentNode) {
+            parentName = container.parentNode.tagName.toLowerCase();
         }
 
-        if (name === WYMeditor.BODY) {
-            // Replace text nodes with <p> tags
+        // Fix forbidden main containers
+        if (wym.isForbiddenMainContainer(name)) {
+            name = parentName;
+        }
+
+        // Replace text nodes with default root tags and make sure the
+        // container is valid if it is a root container
+        if (name === WYMeditor.BODY ||
+                (jQuery.inArray(name, notValidRootContainers) > -1 &&
+                parentName === WYMeditor.BODY)) {
+           // Replace text nodes with <p> tags
             // Detect the case where Cmd-A selected all content, in which case
             // BODY appears to be selected, but should not be formatted.
             range = wym.selection().getAllRanges()[0];
@@ -217,20 +223,29 @@ WYMeditor.WymClassMozilla.prototype.keyup = function (evt) {
                 range.endContainer !== all.endContainer ||
                 range.startOffset !== all.startOffset ||
                 range.endOffset !== all.endOffset) {
-                    wym._exec(WYMeditor.FORMAT_BLOCK, WYMeditor.P);
+		            wym._exec(WYMeditor.FORMAT_BLOCK, defaultRootContainer);
             }
             wym.fixBodyHtml();
         }
     }
 
-    // If we potentially created a new block level element or moved to a new one
-    // then we should ensure that they're in the proper format
-    if (evt.keyCode === WYMeditor.KEY.UP ||
-            evt.keyCode === WYMeditor.KEY.DOWN ||
-            evt.keyCode === WYMeditor.KEY.LEFT ||
-            evt.keyCode === WYMeditor.KEY.RIGHT ||
-            evt.keyCode === WYMeditor.KEY.BACKSPACE ||
-            evt.keyCode === WYMeditor.KEY.ENTER) {
+    // If we potentially created a new block level element or moved to a new
+    // one, then we should ensure the container is valid and the formatting is
+    // proper.
+    if (wym.keyCanCreateBlockElement(evt.which)) {
+        // If the selected container is a root container, make sure it is not a
+        // different possible default root container than the chosen one.
+        container = wym.selected();
+        name = container.tagName.toLowerCase();
+        if (container.parentNode) {
+            parentName = container.parentNode.tagName.toLowerCase();
+        }
+        if (jQuery.inArray(name, notValidRootContainers) > -1 &&
+                parentName === WYMeditor.BODY) {
+            wym._exec(WYMeditor.FORMAT_BLOCK, defaultRootContainer);
+        }
+
+        // Fix formatting if necessary
         wym.fixBodyHtml();
     }
 };
@@ -281,37 +296,6 @@ WYMeditor.WymClassMozilla.prototype.enableDesignMode = function () {
     }
 };
 
-WYMeditor.WymClassMozilla.prototype.openBlockTag = function (tag, attributes) {
-    attributes = this.validator.getValidTagAttributes(tag, attributes);
-
-    // Handle Mozilla styled spans
-    if (tag === 'span' && attributes.style) {
-        var new_tag = this.getTagForStyle(attributes.style);
-        if (new_tag) {
-            tag = new_tag;
-            this._tag_stack.pop();
-            this._tag_stack.push(tag);
-            attributes.style = '';
-        }
-    }
-
-    this.output += this.helper.tag(tag, attributes, true);
-};
-
-WYMeditor.WymClassMozilla.prototype.getTagForStyle = function (style) {
-    if (/bold/.test(style)) {
-        return 'strong';
-    } else if (/italic/.test(style)) {
-        return 'em';
-    } else if (/sub/.test(style)) {
-        return 'sub';
-    } else if (/super/.test(style)) {
-        return 'sup';
-    }
-
-    return false;
-};
-
 /*
  * Fix new cell contents and ability to insert content at the front and end of
  * the contents.
@@ -326,3 +310,4 @@ WYMeditor.WymClassMozilla.prototype.afterInsertTable = function (table) {
         });
     }
 };
+
