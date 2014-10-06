@@ -159,7 +159,9 @@ WYMeditor.WymClassExplorer.prototype._exec = function (cmd, param) {
 };
 
 WYMeditor.WymClassExplorer.prototype.saveCaret = function () {
-    this._doc.caretPos = this._doc.selection.createRange();
+    // Sometimes, IE seems to return null for _doc.selection
+    if (this._doc.selection)
+        this._doc.caretPos = this._doc.selection.createRange();
 };
 
 WYMeditor.WymClassExplorer.prototype.addCssRule = function (styles, oCss) {
