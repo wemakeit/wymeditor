@@ -82,7 +82,8 @@ WYMeditor.WymClassExplorer.prototype.initIframe = function (iframe) {
     };
 
     //callback can't be executed twice, so we check
-    if (this._initialized) {
+    // NOTE: On IE11+ it only gets executed once, so don't filter there.
+    if (this._initialized || ieVersion >= 11) {
 
         //pre-bind functions
         if (jQuery.isFunction(this._options.preBind)) {
