@@ -2242,8 +2242,7 @@ WYMeditor.editor.prototype.restoreSelectionAfterManipulation = function (manipul
             rangy.removeMarkers(savedSelection);
         }
     } catch (e) {
-        WYMeditor.console.error("Error during manipulation");
-        WYMeditor.console.error(e);
+        WYMeditor.console.error("Error during manipulation:", e.stack || e);
         rangy.removeMarkers(savedSelection);
     }
 
